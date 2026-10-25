@@ -1,6 +1,8 @@
-from actions import parse_input, add_contact, update_contact, get_phone
+from actions import parse_input, add_contact, update_contact, get_phone, show_all
+
 
 def main():
+    # key: lowercased name (case-insensitive lookup), value: (name as typed, phone)
     contacts = {}
     print("Welcome to the assistant bot!")
     intro_text = [
@@ -16,6 +18,10 @@ def main():
 
     while True:
         user_input = input("Enter a command: ")
+        if not user_input.strip():
+            print("Please enter a command.")
+            continue
+
         command, *args = parse_input(user_input)
 
         if command in ["close", "exit"]:
@@ -30,9 +36,9 @@ def main():
         elif command == "phone":
             print(get_phone(args, contacts))
         elif command == "all":
-            print(contacts)
+            print(show_all(contacts))
         else:
-            print("Invalid command.")
+            print(f"Invalid command '{command}'.")
 
 
 if __name__ == "__main__":

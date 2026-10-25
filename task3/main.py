@@ -1,29 +1,53 @@
 import argparse
-from process_data import load_logs, parse_log_line, filter_logs_by_level, count_logs_by_level, display_log_counts, display_log_level_details
+from process_data import (
+    load_logs,
+    parse_log_line,
+    filter_logs_by_level,
+    count_logs_by_level,
+    display_log_counts,
+    display_log_level_details,
+)
 
-# python3 task3/main.py task3/log.txt --log-level=error
+# Usage:
+#   python3 task3/main.py task3/log.txt
+#   python3 task3/main.py task3/log.txt error
+
+
 def main():
-    full_log = []
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Analyze a log file")
     parser.add_argument("file_path", help="Path to the log file")
-    parser.add_argument("--log-level", default=None, help="Logging level")
+    parser.add_argument("log_level", nargs="?", default=None,
+                        help="Optional log level to show details for (e.g. error)")
     args = parser.parse_args()
 
-    file_path = args.file_path
-    log_level = args.log_level
-
-    log_lines = load_logs(file_path)
-    if len(log_lines) == 0:
-        print("No log")
+    log_lines = load_logs(args.file_path)
+    if not log_lines:
+        print("No logs to analyze.")
         return
-    
-    for log_line in log_lines:
-        full_log.append(parse_log_line(log_line))
-    logs_counts = count_logs_by_level(full_log)
-    display_log_counts(logs_counts)
-    if (log_level):
-        filtered_log = filter_logs_by_level(full_log, log_level)
-        display_log_level_details(filtered_log)
+
+    logs = []
+    skipped = 0
+    for line_number, line in enumerate(log_lines, start=1):
+        if not line.strip():
+            continue
+        parsed = parse_log_line(line)
+        if parsed is None:
+            skipped += 1
+            print(f"Warning: skipped malformed line {line_number}: {line.strip()}")
+            continue
+        logs.append(parsed)
+
+    if not logs:
+        print("No valid log entries found.")
+        return
+
+    display_log_counts(count_logs_by_level(logs))
+    if skipped:
+        print(f"Skipped malformed lines: {skipped}\n")
+
+    if args.log_level:
+        filtered = filter_logs_by_level(logs, args.log_level)
+        display_log_level_details(filtered, args.log_level)
 
 
 if __name__ == "__main__":
